@@ -1,6 +1,7 @@
 package taskmanager.config;
 
 import org.hibernate.jpa.HibernatePersistenceProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,13 +18,16 @@ import java.util.Properties;
 @EnableJpaRepositories(basePackages = "taskmanager.repo")
 public class AppConfig {
 
+    @Autowired
+    ConfigProperties configProp;
+
     @Bean
     public DriverManagerDataSource conferenceDataSource() {
         DriverManagerDataSource ds = new DriverManagerDataSource();
-        ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        ds.setUrl("jdbc:mysql://localhost:13306/task_manager_db");
-        ds.setUsername("usr");
-        ds.setPassword("qwerty");
+        ds.setDriverClassName(configProp.getConfigValue("db.mysql.driver"));
+        ds.setUrl(configProp.getConfigValue("db.mysql.url"));
+        ds.setUsername(configProp.getConfigValue("db.mysql.username"));
+        ds.setPassword(configProp.getConfigValue("db.mysql.password"));
         return ds;
     }
 

@@ -1,6 +1,7 @@
 package taskmanager.enums;
 
-public enum TaskStatusEnum {
+
+public enum TaskStatusEnum{
     NEW("New"),
     IN_PROCESS("InProcess"),
     DONE("Done"),
@@ -18,4 +19,5 @@ public enum TaskStatusEnum {
         }
         return false;
     }
+
 }

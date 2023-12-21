@@ -1,11 +1,15 @@
 package taskmanager.dao;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @Table(name = "USER_TBL", schema = "task_manager_db")
 public class User {
 

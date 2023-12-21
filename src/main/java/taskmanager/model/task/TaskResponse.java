@@ -1,9 +1,11 @@
-package taskmanager.model;
+package taskmanager.model.task;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import taskmanager.dao.Task;
+import taskmanager.model.UserResponse;
+import taskmanager.model.comment.CommentResponse;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,7 +24,6 @@ public class TaskResponse {
     private UserResponse responsiblePerson;
     private LocalDateTime created;
     private LocalDateTime lastUpdateDate;
-    private List<CommentResponse> comments;
 
     public TaskResponse(Task t) {
         this.id = t.getId();
@@ -34,11 +35,5 @@ public class TaskResponse {
         this.priority = t.getPriority();
         this.author = new UserResponse(t.getAuthor());
         this.responsiblePerson = new UserResponse(t.getResponsiblePerson());
-        this.comments = new ArrayList<>();
-        if ((t.getComments() != null) && (!t.getComments().isEmpty())) {
-            t.getComments().forEach(comment -> {
-                comments.add(new CommentResponse(comment));
-            });
-        }
     }
 }

@@ -1,24 +1,22 @@
 package taskmanager.controller;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import taskmanager.config.JwtUtils;
+import org.springframework.web.bind.annotation.*;
 import taskmanager.dao.Comment;
+import taskmanager.dao.Task;
 import taskmanager.dao.User;
-import taskmanager.model.AuthenticationRequest;
-import taskmanager.model.CommentRequest;
-import taskmanager.model.CommentResponse;
+import taskmanager.exception.InternalProcessException;
+import taskmanager.model.comment.CommentRequest;
+import taskmanager.model.comment.CommentResponse;
 import taskmanager.service.CommentService;
 import taskmanager.service.UserService;
-import taskmanager.utility.JsonSerializer;
 
 
 @RestController
@@ -40,26 +38,38 @@ public class CommentController {
         return userService.findUserByName(username);
     }
 
-    @PostMapping("/newComment")
-    public ResponseEntity<String> newComment(
-            @RequestBody CommentRequest req
+    @PostMapping("/comment/add")
+    public ResponseEntity<CommentResponse> addComment(
+            @RequestBody @Valid CommentRequest req
     ) {
-        CommentResponse comment = null;
         req.setAuthor(getCurrentUser().getId());
+
         try {
-            comment = new CommentResponse(commentService.create(req));
+            return new ResponseEntity<>(
+                    new CommentResponse(
+                            commentService.create(req)
+                    ), HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(e.toString());
+            throw new InternalProcessException("Comment not saved, " + e.toString());
         }
+    }
 
-        if ((comment != null) && (comment.getId() > 0)) {
-            String jsonResponse = JsonSerializer.gson().toJson(comment);
-
-            return ResponseEntity
-                    .ok()
-                    .body(jsonResponse);
+    @GetMapping("/getComments")
+    public ResponseEntity<Page<CommentResponse>> findPaginated(
+            @RequestParam @NotNull int page,
+            @RequestParam @NotNull int size,
+            @RequestParam @NotNull long taskId
+    ) {
+        try {
+            return new ResponseEntity<>(
+                    commentService.getAllCommentsByTaskIdPaged(
+                            page,
+                            size,
+                            taskId)
+                    , HttpStatus.OK);
+        } catch (Exception e) {
+            throw new InternalProcessException("Comment request failed, " + e.toString());
         }
-        return ResponseEntity.status(400).body("Add new comment failed");
     }
 
 }

@@ -1,11 +1,15 @@
 package taskmanager.dao;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @Table(name = "COMMENTS_TBL", schema = "task_manager_db")
 public class Comment {
 
@@ -25,7 +29,7 @@ public class Comment {
 
     private String text;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "AUTHOR_ID")
     private User author;
 }

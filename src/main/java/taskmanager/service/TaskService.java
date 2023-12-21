@@ -9,6 +9,10 @@ import taskmanager.dao.Task;
 import taskmanager.enums.TaskPriorityEnum;
 import taskmanager.enums.TaskStatusEnum;
 import taskmanager.model.TaskRequest;
+import taskmanager.model.task.CreateTaskRequest;
+import taskmanager.model.task.DeleteTaskRequest;
+import taskmanager.model.task.EditTaskRequest;
+import taskmanager.model.task.TaskResponse;
 import taskmanager.repo.CommentRepo;
 import taskmanager.repo.TaskRepo;
 import taskmanager.repo.UserRepo;
@@ -27,10 +31,8 @@ public class TaskService {
 
 
     public Task create(
-            TaskRequest tr
+            CreateTaskRequest tr
     ) {
-        createValidation(tr);
-
         Task t = new Task();
         t.setCreated(LocalDateTime.now());
         t.setLastUpdateDate(LocalDateTime.now());
@@ -46,29 +48,11 @@ public class TaskService {
         return repo.save(t);
     }
 
-    private void createValidation(
-            TaskRequest tr
-    ) {
-        if ((tr.getTitle() == null) || (tr.getTitle().isEmpty())) {
-            throw new RuntimeException("Title is required field.");
-        }
-        if ( !TaskPriorityEnum.isItARightValue(tr.getPriority())) {
-            throw new RuntimeException("Invalid Priority value");
-        }
-        try {
-            userRepo.findById(tr.getResponsiblePerson());
-        } catch (Exception e) {
-            throw new RuntimeException("Responsible person not found");
-        }
-    }
-
     public Task update(
-            TaskRequest tr,
+            EditTaskRequest tr,
             Long initiatorId
     ) {
         Task t = repo.findById(tr.getId()).get();
-
-        updateValidation(tr, t);
 
         t.setLastUpdateDate(LocalDateTime.now());
         t.setVersion(t.getVersion() + 1);
@@ -95,28 +79,6 @@ public class TaskService {
         return repo.save(t);
     }
 
-    private void updateValidation(
-            TaskRequest tr,
-            Task t
-    ) {
-        if (!t.getAuthor().getId().equals(tr.getAuthor())) {
-            throw new RuntimeException("Task update is not allowed.");
-        }
-        if ((tr.getTitle() == null) || (tr.getTitle().isEmpty())) {
-            throw new RuntimeException("Title is required field.");
-        }
-        if ( !TaskStatusEnum.isItARightValue(tr.getStatus())) {
-            throw new RuntimeException("Invalid Status value");
-        }
-        if ( !TaskPriorityEnum.isItARightValue(tr.getPriority())) {
-            throw new RuntimeException("Invalid Priority value");
-        }
-        try {
-            userRepo.findById(tr.getResponsiblePerson());
-        } catch (Exception e) {
-            throw new RuntimeException("Responsible person not found");
-        }
-    }
     private void authorChange(
             Task t,
             Long initId
@@ -133,13 +95,13 @@ public class TaskService {
     }
 
     public boolean delete(
-            TaskRequest tr,
+            DeleteTaskRequest tr,
             Long initiatorId
     ) {
         Task t = repo.findById(tr.getId()).get();
         authorChange(t, initiatorId);
         try {
-            commentRepo.deleteAll(t.getComments());
+            commentRepo.deleteAll(commentRepo.findAllByParentTaskId(t.getId()));
             repo.delete(t);
             return true;
         } catch (IllegalArgumentException iae) {
@@ -159,23 +121,22 @@ public class TaskService {
         return StreamSupport.stream(repo.findAll().spliterator(), false).toList();
     }
 
-    public Page<Task> getAllTasksPaged (int page, int size) {
-        Page<Task> resultPage = repo.findAll(PageRequest.of(page, size, Sort.by("created")));
-        return resultPage;
+    public Page<TaskResponse> getAllTasksPaged (int page, int size) {
+        Page<Task> midResultPage = repo.findAll(PageRequest.of(page, size, Sort.by("created")));
+        return midResultPage.map(TaskResponse::new);
     }
 
-    public Page<Task> getTasksByAuthorPaged (Long author, int page, int size) {
-        Page<Task> resultPage = repo.findByAuthor(
+    public Page<TaskResponse> getTasksByAuthorPaged (Long author, int page, int size) {
+        Page<Task> midResultPage = repo.findByAuthor(
                 userRepo.findById(author).get(),
                 PageRequest.of(page, size, Sort.by("created")));
-        return resultPage;
+        return midResultPage.map(TaskResponse::new);
     }
 
-    public Page<Task> getTasksByRespPersonPaged (Long respPers,int page, int size) {
-        Page<Task> resultPage = repo.findByResponsiblePerson(
+    public Page<TaskResponse> getTasksByRespPersonPaged (Long respPers,int page, int size) {
+        Page<Task> midResultPage = repo.findByResponsiblePerson(
                 userRepo.findById(respPers).get(),
-                PageRequest.of(page, size, Sort.by("created"))
-        );
-        return resultPage;
+                PageRequest.of(page, size, Sort.by("created")));
+        return midResultPage.map(TaskResponse::new);
     }
 }

@@ -1,20 +1,22 @@
 package taskmanager.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import taskmanager.config.JwtUtils;
-import taskmanager.dao.User;
-import taskmanager.model.AuthenticationRequest;
+import taskmanager.exception.InternalProcessException;
+import taskmanager.model.user.LoggedOnResponse;
+import taskmanager.model.user.LogonRequest;
+import taskmanager.model.user.RegisterRequest;
+import taskmanager.model.user.RegisterResponse;
 import taskmanager.service.UserService;
-import taskmanager.utility.JsonSerializer;
-
 
 @RestController
 @RequestMapping("/api/auth")
@@ -25,49 +27,35 @@ public class AuthenticationController {
     private final UserService userService;
     private final JwtUtils jwtUtils;
 
-    @PostMapping("/authenticate")
-    public ResponseEntity<String> authenticate(
-            @RequestBody AuthenticationRequest req
+    @PostMapping("/logon")
+    public ResponseEntity<LoggedOnResponse> logon(
+            @RequestBody @Valid LogonRequest req
     ) {
-        UserDetails user = null;
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword())
             );
-            user = userService.findByName(req.getUsername());
+            return new ResponseEntity<>(new LoggedOnResponse(
+                    jwtUtils.generateToken(userService.findByName(req.getUsername()))
+            ), HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(e.toString());
+            throw new InternalProcessException("Logon failed, " + e.toString());
         }
-        if (user != null) {
-            return ResponseEntity
-                    .ok()
-                    .body(jwtUtils.generateToken(user));
-        }
-        return ResponseEntity.status(400).body("Some error has occurred");
+
     }
 
-    @PostMapping("/registration")
-    public ResponseEntity<String> registration(
-            @RequestBody AuthenticationRequest req
+    @PostMapping("/register")
+    public ResponseEntity<RegisterResponse> register(
+            @RequestBody @Valid RegisterRequest req
     ) {
-        User user = null;
         try {
-            user = userService.create(
-                req.getUsername(), req.getPassword(), "user"
-            );
+            return new ResponseEntity<>(
+                    new RegisterResponse(
+                        userService.create(req.getUsername(), req.getPassword(), "user")
+            ), HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(e.toString());
+            throw new InternalProcessException("Registration failed, " + e.toString());
         }
-
-        if ((user != null) && (user.getId() > 0)) {
-            user.setPassword(null);
-            String jsonResponse = JsonSerializer.gson().toJson(user);
-
-            return ResponseEntity
-                    .ok()
-                    .body(jsonResponse);
-        }
-        return ResponseEntity.status(400).body("Registration failed");
     }
 
     //TODO logoff

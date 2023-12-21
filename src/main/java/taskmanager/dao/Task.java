@@ -1,13 +1,16 @@
 package taskmanager.dao;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @Table(name = "TASK_TBL", schema = "task_manager_db")
 public class Task {
 
@@ -30,15 +33,11 @@ public class Task {
 
     private String priority;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "AUTHOR_ID")
     private User author;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "RESPONSIBLE_PERSON_ID")
     private User responsiblePerson;
-
-    @OneToMany(fetch = FetchType.EAGER)
-    @JoinColumn(name = "PAR_TASK_ID")
-    private List<Comment> comments;
 }

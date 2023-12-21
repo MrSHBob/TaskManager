@@ -1,9 +1,11 @@
-package taskmanager.model;
+package taskmanager.model.comment;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import taskmanager.dao.Comment;
+import taskmanager.model.UserResponse;
+
 import java.time.LocalDateTime;
 
 @Getter

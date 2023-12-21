@@ -66,7 +66,8 @@ public class SecurityConfig {
                 .csrf().disable()
                 .cors().and()
                 .authorizeHttpRequests()
-                .requestMatchers("/api/auth/**", "/swagger-ui/**", "/swagger-ui-custom/**", "/v3/api-docs/**")
+                .requestMatchers("/api/auth/**", "/swagger-ui/**", "/swagger-ui-custom/**",
+                        "/v3/api-docs/**", "/api/tests/**")
 //                .requestMatchers("/**")
                 .permitAll()
                 .anyRequest()
@@ -78,7 +79,12 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(
                         jwtAuthFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                        UsernamePasswordAuthenticationFilter.class)
+//                .logout()
+////                .logoutUrl("/perform_logout")
+//                .invalidateHttpSession(true)
+//                .deleteCookies("JSESSIONID")
+        ;
         return http.build();
     }
 

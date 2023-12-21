@@ -22,7 +22,7 @@ Run application:
 ./gradlew bootRun
 ```
 
-Run tests:
+Run tests (run application before run api tests):
 
 ```shell
 ./gradlew test
